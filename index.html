@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TurnoFácil Soporte - Agenda tu revisión técnica</title>
+  <style>
+    :root {
+      --primary: #0f172a;
+      --primary-light: #e0f2fe;
+      --accent: #2563eb;
+      --success: #16a34a;
+      --bg: #f1f5f9;
+      --text: #0f172a;
+      --muted: #64748b;
+    }
+    * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; margin: 0; padding: 0; }
+    body { background: linear-gradient(135deg, #dbeafe 0%, #f1f5f9 100%); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 16px; color: var(--text); }
+    .app-container { background: #ffffff; width: 100%; max-width: 430px; border-radius: 24px; box-shadow: 0 15px 35px rgba(15, 23, 42, 0.12); overflow: hidden; }
+    
+    /* Encabezado tipo App */
+    .top-bar { background: var(--primary); color: #fff; padding: 22px 24px 18px; text-align: center; }
+    .top-bar h1 { font-size: 1.5rem; letter-spacing: -0.5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .top-bar p { font-size: 0.85rem; opacity: 0.88; margin-top: 4px; }
+
+    /* Barra de progreso */
+    .progress-bar { display: flex; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 10px 20px; justify-content: space-between; font-size: 0.78rem; font-weight: 600; color: var(--muted); }
+    .progress-step.active { color: var(--accent); font-weight: 700; }
+    .progress-step.done { color: var(--success); }
+
+    .content { padding: 22px 24px 26px; }
+    .screen { display: none; }
+    .screen.active { display: block; animation: slideUp 0.25s ease-out; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Tarjetas de inicio */
+    .hero-banner { background: var(--primary-light); border-left: 4px solid var(--accent); padding: 14px; border-radius: 12px; margin-bottom: 18px; }
+    .hero-banner h2 { font-size: 1rem; color: #1e3a8a; margin-bottom: 4px; }
+    .hero-banner p { font-size: 0.85rem; color: #334155; line-height: 1.4; }
+
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+    .stat-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; text-align: center; }
+    .stat-box strong { display: block; font-size: 1.1rem; color: var(--primary); }
+    .stat-box span { font-size: 0.75rem; color: var(--muted); }
+
+    /* Tarjetas de servicio */
+    .service-card { border: 2px solid #e2e8f0; border-radius: 14px; padding: 14px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
+    .service-card:hover { border-color: #93c5fd; background: #f8fafc; }
+    .service-card.selected { border-color: var(--accent); background: #eff6ff; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12); }
+    .service-info h4 { font-size: 0.98rem; color: var(--text); }
+    .service-info p { font-size: 0.8rem; color: var(--muted); margin-top: 3px; }
+    .service-tag { background: #dbeafe; color: #1d4ed8; font-size: 0.75rem; font-weight: 700; padding: 5px 10px; border-radius: 20px; white-space: nowrap; }
+
+    /* Resumen seleccionado */
+    .selected-summary { background: #eff6ff; border: 1px solid #bfdbfe; padding: 10px 14px; border-radius: 10px; font-size: 0.83rem; color: #1e3a8a; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+    .change-link { color: var(--accent); font-weight: 700; cursor: pointer; text-decoration: underline; }
+
+    /* Formulario */
+    label { display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-top: 12px; margin-bottom: 5px; }
+    input { width: 100%; padding: 11px 13px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 0.92rem; transition: 0.2s; }
+    input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+    
+    .hours-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 6px; }
+    .hour-btn { padding: 9px 6px; border: 1.5px solid #cbd5e1; background: #fff; border-radius: 8px; cursor: pointer; font-size: 0.82rem; font-weight: 700; color: #1e293b; transition: 0.15s; }
+    .hour-btn:hover { border-color: var(--accent); }
+    .hour-btn.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* Botones */
+    .btn { width: 100%; padding: 13px; border-radius: 12px; font-size: 0.96rem; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; margin-top: 16px; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-outline { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); margin-top: 10px; }
+    .btn-outline:hover { background: #f8fafc; }
+    .btn-ghost { background: #f1f5f9; color: #475569; margin-top: 10px; }
+
+    /* Comprobante / Ticket */
+    .ticket { background: #f8fafc; border: 2px dashed #94a3b8; border-radius: 16px; padding: 20px; text-align: center; position: relative; }
+    .status-pill { display: inline-block; background: #dcfce7; color: #15803d; font-size: 0.78rem; font-weight: 800; padding: 4px 12px; border-radius: 20px; margin-bottom: 8px; }
+    .ticket-code { font-size: 2rem; font-weight: 900; color: var(--primary); letter-spacing: 1px; margin: 6px 0 12px; }
+    .ticket-row { display: flex; justify-content: space-between; font-size: 0.86rem; padding: 7px 0; border-bottom: 1px solid #e2e8f0; text-align: left; }
+    .ticket-row:last-child { border-bottom: none; }
+    .ticket-row span { color: var(--muted); }
+
+    /* Historial de turnos */
+    .saved-item { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .saved-item h5 { color: var(--primary); font-size: 0.95rem; }
+    .saved-item p { font-size: 0.8rem; color: #475569; margin-top: 2px; }
+    .btn-cancel { background: #fee2e2; color: #dc2626; border: none; padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+
+    .error-msg { color: #dc2626; font-size: 0.8rem; font-weight: 600; margin-top: 10px; display: none; }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <div class="top-bar">
+      <h1>💻 TurnoFácil Soporte</h1>
+      <p>Agendamiento de revisión técnica de computadores y portátiles</p>
+    </div>
+
+    <div class="progress-bar" id="progress-bar">
+      <span class="progress-step active" id="step-ind-1">1. Inicio</span>
+      <span class="progress-step" id="step-ind-2">2. Servicio</span>
+      <span class="progress-step" id="step-ind-3">3. Datos y Hora</span>
+      <span class="progress-step" id="step-ind-4">4. Ticket</span>
+    </div>
+
+    <div class="content">
+      <!-- PANTALLA 1: INICIO -->
+      <div id="screen-1" class="screen active">
+        <div class="hero-banner">
+          <h2>Soporte técnico ágil y sin esperas</h2>
+          <p>Reserva tu turno en línea, entrega tu computador sin hacer fila y haz seguimiento con tu código digital.</p>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-box">
+            <strong>&lt; 1 min</strong>
+            <span>Tiempo de reserva</span>
+          </div>
+          <div class="stat-box">
+            <strong>6 horarios</strong>
+            <span>Disponibles hoy</span>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="goToScreen(2)">+ Agendar revisión técnica</button>
+        <button class="btn btn-outline" onclick="openHistory()">📋 Consultar mis turnos (<span id="saved-count">0</span>)</button>
+      </div>
+
+      <!-- PANTALLA 2: SERVICIO (LENGUAJE SENCILLO PARA CUALQUIER PERSONA) -->
+      <div id="screen-2" class="screen">
+        <h3 style="font-size:1.05rem; margin-bottom:12px;">¿Cómo prefieres que revisemos tu equipo?</h3>
+
+        <div class="service-card" onclick="selectService(this, 'Mantenimiento Virtual (Remoto)', '30 min')">
+          <div class="service-info">
+            <h4>🌐 Mantenimiento Virtual</h4>
+            <p>Ayuda por videollamada si tu equipo está lento, tiene virus o falla un programa.</p>
+          </div>
+          <span class="service-tag">30 min</span>
+        </div>
+
+        <div class="service-card" onclick="selectService(this, 'Mantenimiento Presencial en Taller', '45 min')">
+          <div class="service-info">
+            <h4>🛠️ Mantenimiento Presencial</h4>
+            <p>Limpieza física por dentro, revisión de piezas y cambio de pasta térmica.</p>
+          </div>
+          <span class="service-tag">45 min</span>
+        </div>
+
+        <p id="err-2" class="error-msg">⚠️ Selecciona una opción para continuar.</p>
+        <button class="btn btn-primary" onclick="validateStep2()">Continuar al horario</button>
+        <button class="btn btn-ghost" onclick="goToScreen(1)">Volver al inicio</button>
+      </div>
+
+      <!-- PANTALLA 3: DATOS DEL CLIENTE Y HORARIO -->
+      <div id="screen-3" class="screen">
+        <div class="selected-summary">
+          <span>Servicio: <strong id="summary-service"></strong></span>
+          <span class="change-link" onclick="goToScreen(2)">Cambiar</span>
+        </div>
+
+        <label for="client-name">Nombre completo del propietario *</label>
+        <input type="text" id="client-name" placeholder="Ej. Damián Penagos">
+
+        <label for="client-doc">Número de identificación *</label>
+        <input type="text" id="client-doc" placeholder="Ej. 1023456789">
+
+        <label for="appt-date">Fecha de atención *</label>
+        <input type="date" id="appt-date">
+
+        <label>Horarios disponibles *</label>
+        <div class="hours-grid">
+          <button type="button" class="hour-btn" onclick="selectHour(this, '08:00 AM')">08:00 AM</button>
+          <button type="button" class="hour-btn" onclick="selectHour(this, '09:30 AM')">09:30 AM</button>
+          <button type="button" class="hour-btn" onclick="selectHour(this, '11:00 AM')">11:00 AM</button>
+          <button type="button" class="hour-btn" onclick="selectHour(this, '02:00 PM')">02:00 PM</button>
+          <button type="button" class="hour-btn" onclick="selectHour(this, '03:30 PM')">03:30 PM</button>
+          <button type="button" class="hour-btn" onclick="selectHour(this, '05:00 PM')">05:00 PM</button>
+        </div>
+
+        <p id="err-3" class="error-msg">⚠️ Completa tu nombre, identificación, fecha y hora.</p>
+        <button class="btn btn-primary" onclick="confirmBooking()">Confirmar turno técnico</button>
+        <button class="btn btn-ghost" onclick="goToScreen(2)">Atrás</button>
+      </div>
+
+      <!-- PANTALLA 4: COMPROBANTE -->
+      <div id="screen-4" class="screen">
+        <div class="ticket">
+          <span class="status-pill">✓ TURNO CONFIRMADO</span>
+          <p style="font-size:0.78rem; color:var(--muted);">CÓDIGO DE RECEPCIÓN</p>
+          <div class="ticket-code" id="res-code">#TF-412</div>
+
+          <div class="ticket-row"><span>Cliente:</span><strong id="res-name"></strong></div>
+          <div class="ticket-row"><span>Identificación:</span><strong id="res-doc"></strong></div>
+          <div class="ticket-row"><span>Servicio:</span><strong id="res-service"></strong></div>
+          <div class="ticket-row"><span>Fecha y Hora:</span><strong id="res-datetime"></strong></div>
+          <div class="ticket-row"><span>Punto de atención:</span><strong>Mesa Técnica 1</strong></div>
+        </div>
+
+        <p style="font-size:0.8rem; color:var(--muted); text-align:center; margin-top:12px;">
+          Conéctate o acércate al taller 5 minutos antes de la hora agendada.
+        </p>
+        <button class="btn btn-primary" onclick="resetForm()">Volver al inicio</button>
+      </div>
+
+      <!-- PANTALLA 5: MIS TURNOS AGENDADOS -->
+      <div id="screen-5" class="screen">
+        <h3 style="font-size:1.05rem; margin-bottom:12px;">Mis turnos agendados</h3>
+        <div id="history-list"></div>
+        <button class="btn btn-primary" onclick="goToScreen(2)">+ Agendar otro equipo</button>
+        <button class="btn btn-ghost" onclick="goToScreen(1)">Volver al inicio</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let selectedService = '';
+    let selectedHour = '';
+    let bookings = JSON.parse(localStorage.getItem('turnofacil_soporte_bookings') || '[]');
+
+    const dateInput = document.getElementById('appt-date');
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.value = today;
+    dateInput.min = today;
+    updateCounter();
+
+    function updateCounter() {
+      document.getElementById('saved-count').textContent = bookings.length;
+    }
+
+    function goToScreen(num) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('screen-' + num).classList.add('active');
+
+      const bar = document.getElementById('progress-bar');
+      if (num === 5) {
+        bar.style.display = 'none';
+      } else {
+        bar.style.display = 'flex';
+        for (let i = 1; i <= 4; i++) {
+          const el = document.getElementById('step-ind-' + i);
+          el.classList.remove('active', 'done');
+          if (i < num) el.classList.add('done');
+          if (i === num) el.classList.add('active');
+        }
+      }
+    }
+
+    function selectService(card, name, duration) {
+      document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedService = `${name} (${duration})`;
+      document.getElementById('err-2').style.display = 'none';
+    }
+
+    function validateStep2() {
+      if (!selectedService) {
+        document.getElementById('err-2').style.display = 'block';
+        return;
+      }
+      document.getElementById('summary-service').textContent = selectedService;
+      goToScreen(3);
+    }
+
+    function selectHour(btn, hour) {
+      document.querySelectorAll('.hour-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedHour = hour;
+      document.getElementById('err-3').style.display = 'none';
+    }
+
+    function confirmBooking() {
+      const name = document.getElementById('client-name').value.trim();
+      const doc = document.getElementById('client-doc').value.trim();
+      const date = document.getElementById('appt-date').value;
+
+      if (!name || !doc || !date || !selectedHour) {
+        document.getElementById('err-3').style.display = 'block';
+        return;
+      }
+
+      const code = '#TF-' + Math.floor(100 + Math.random() * 900);
+      const datetime = `${date} • ${selectedHour}`;
+
+      document.getElementById('res-code').textContent = code;
+      document.getElementById('res-name').textContent = name;
+      document.getElementById('res-doc').textContent = doc;
+      document.getElementById('res-service').textContent = selectedService;
+      document.getElementById('res-datetime').textContent = datetime;
+
+      bookings.push({ code, name, doc, service: selectedService, datetime });
+      localStorage.setItem('turnofacil_soporte_bookings', JSON.stringify(bookings));
+      updateCounter();
+      goToScreen(4);
+    }
+
+    function openHistory() {
+      const list = document.getElementById('history-list');
+      if (bookings.length === 0) {
+        list.innerHTML = '<p style="color:#64748b; font-size:0.88rem; text-align:center; padding:20px 0;">Aún no tienes turnos técnicos agendados.</p>';
+      } else {
+        list.innerHTML = bookings.map((b, idx) => `
+          <div class="saved-item">
+            <div>
+              <h5>${b.code} — ${b.service}</h5>
+              <p><strong>${b.name}</strong> (ID: ${b.doc})</p>
+              <p>📅 ${b.datetime}</p>
+            </div>
+            <button class="btn-cancel" onclick="cancelBooking(${idx})">Cancelar</button>
+          </div>
+        `).join('');
+      }
+      goToScreen(5);
+    }
+
+    function cancelBooking(index) {
+      bookings.splice(index, 1);
+      localStorage.setItem('turnofacil_soporte_bookings', JSON.stringify(bookings));
+      updateCounter();
+      openHistory();
+    }
+
+    function resetForm() {
+      selectedService = '';
+      selectedHour = '';
+      document.getElementById('client-name').value = '';
+      document.getElementById('client-doc').value = '';
+      document.querySelectorAll('.service-card, .hour-btn').forEach(el => el.classList.remove('selected'));
+      goToScreen(1);
+    }
+  </script>
+</body>
+</html>
